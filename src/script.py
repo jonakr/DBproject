@@ -6,21 +6,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import mysql.connector
 from addPlayer import addPlayer
-
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="root",
-    database="faceit"
-)
+from config import *
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-headers = {
-        'accept': 'application/json',
-        'Authorization': 'Bearer 85c91c97-e563-4ee8-acc1-aea288b42369',
-    }
-
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
@@ -30,7 +18,7 @@ mycursor.execute("SELECT name FROM players")
 players = mycursor.fetchall()
 
 app.layout = html.Div([
-    html.H6("Input a Faceit Nickname!"),
+    html.H3("Faceit Stat Checker"),
     html.Div([
         dcc.Dropdown(
             id='players-dd',
@@ -38,38 +26,44 @@ app.layout = html.Div([
         )
     ]),
     html.Div([
-        dcc.Input(id='input', type='text'),
+        dcc.Input(id='input', type='text', placeholder='Enter a playername...'),
         html.Button(id='submit-button-state', n_clicks=0, children='Submit')]),
     html.Br(),
-    html.Div(id='output-state'),
-    html.Div(id='test'),
-
+    html.Div([
+        html.Img(id='profile-picture'),
+        html.A(id='output-name'),
+    ]),
 ])
 
 
 @app.callback(
-    Output('test', 'children'),
+    Output('players-dd', 'options'),
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
 )
 def update_output_div(nClicks, input_value):
     if input_value:
         addPlayer(input_value)
-        return 1
-    else: 
-        return 0
+        
+    # TODO: wait until addPlayer is done
+    
+    mycursor.execute("SELECT name FROM players")
+    return [{"label": i['name'], "value": i['name']} for i in mycursor.fetchall()]
+
 
 @app.callback(
-    Output('output-state', 'children'),
+    Output('output-name', 'children'),
+    Output('profile-picture', 'src'),
+    Output('output-name', 'href'),
     Input('players-dd', 'value'),
 )
 def update_output_div(input_value):
     if input_value:
         mycursor.execute("SELECT * FROM players WHERE name = '{}'".format(input_value))
         player = mycursor.fetchall()
-        return 'Output: {} '.format(player[0]['name'])
+        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile'])
     else:
-        return ''
+        return '', '', ''
     
 
 if __name__ == '__main__':
