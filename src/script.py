@@ -12,10 +12,15 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
+cursor = db.cursor(dictionary=True)
+cursor.execute("SHOW TABLES LIKE 'players'")
+result = cursor.fetchone()
 
-mycursor = db.cursor(dictionary=True)
-mycursor.execute("SELECT name FROM players")
-players = mycursor.fetchall()
+if not result:
+    cursor.execute(dbPlayersLayout)
+
+cursor.execute("SELECT name FROM players")
+players = cursor.fetchall()
 
 app.layout = html.Div([
     html.H3("Faceit Stat Checker"),
@@ -47,8 +52,8 @@ def update_output_div(nClicks, input_value):
         
     # TODO: wait until addPlayer is done
     
-    mycursor.execute("SELECT name FROM players")
-    return [{"label": i['name'], "value": i['name']} for i in mycursor.fetchall()]
+    cursor.execute("SELECT name FROM players")
+    return [{"label": i['name'], "value": i['name']} for i in cursor.fetchall()]
 
 
 @app.callback(
