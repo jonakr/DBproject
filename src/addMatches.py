@@ -4,7 +4,7 @@ import mysql.connector
 from config import *
 
 def addMatches(id):
-    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
+    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=10', headers=headers).content)
 
     cursor = db.cursor()
     cursor.execute("SHOW TABLES LIKE 'matches'")
@@ -28,7 +28,7 @@ def addMatches(id):
                     quads = player['player_stats']['Quadro Kills']
                     pentas = player['player_stats']['Penta Kills']
 
-        sql = "INSERT INTO matches (matchId, playerId, map, result, win, kills, deaths, assists, headshots, triples, quads, pentas) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO matches (matchId, playerId, map, result, win, kills, deaths, assists, headshots, triples, quads, pentas) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         val = (match['match_id'], id , matchStats['rounds'][0]['round_stats']['Map'], matchStats['rounds'][0]['round_stats']['Score'], win, kills, deaths, assists, headshots, triples, quads, pentas)
         
         cursor.execute(sql, val)

@@ -7,6 +7,9 @@ from dash.dependencies import Input, Output, State
 import mysql.connector
 from addPlayer import addPlayer
 from config import *
+import plotly.express as px
+from getPlayerId import getPlayerId
+import pandas as pd
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -38,6 +41,43 @@ app.layout = html.Div([
         html.Img(id='profile-picture'),
         html.A(id='output-name'),
     ]),
+
+    html.Div([
+
+        html.Div([
+            dcc.Dropdown(
+                id='player1',
+                options=[{'label': i['name'], 'value': i['name']} for i in players],
+            ),
+        ],
+        style={'width': '33%', 'display': 'inline-block'}),
+
+        html.Div([
+            dcc.Dropdown(
+                id='yaxis',
+                options=[{'label': 'Kills', 'value': 'kills'},
+                {'label': 'Deaths', 'value': 'deaths'},
+                {'label': 'Assists', 'value': 'assists'},
+                {'label': 'Headshot Rate', 'value': 'headshots'},
+                {'label': 'Triple Kills', 'value': 'triples'},
+                {'label': 'Quad Kills', 'value': 'quads'},
+                {'label': 'Aces', 'value': 'pentas'},
+                {'label': 'K/D', 'value': 'K/D'},
+                {'label': 'KPR', 'value': 'KPR'},
+                {'label': 'Win', 'value': 'win'}],
+            ),
+        ],
+        style={'width': '33%', 'display': 'inline-block'}),
+
+        html.Div([
+            dcc.Dropdown(
+                id='player2',
+                options=[{'label': i['name'], 'value': i['name']} for i in players],
+            ),
+        ],style={'width': '33%', 'display': 'inline-block'})
+    ]),
+
+    dcc.Graph(id='indicator-graphic'),
 ])
 
 
@@ -64,11 +104,44 @@ def update_output_div(nClicks, input_value):
 )
 def update_output_div(input_value):
     if input_value:
-        mycursor.execute("SELECT * FROM players WHERE name = '{}'".format(input_value))
-        player = mycursor.fetchall()
+        cursor.execute("SELECT * FROM players WHERE name = '{}'".format(input_value))
+        player = cursor.fetchall()
         return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile'])
     else:
         return '', '', ''
+
+@app.callback(
+    Output('indicator-graphic', 'figure'),
+    Output('player1', 'options'),
+    Output('player2', 'options'),
+    Input('player1', 'value'),
+    Input('player2', 'value'),
+    Input('yaxis', 'value'),
+)
+def update_graph(player1, player2, yaxis):
+    
+    # TODO: maybe safe playname as foreign key
+    #       add if to prevent errors
+    player1Id = getPlayerId(player1)
+    player2Id = getPlayerId(player2)
+
+    df = pd.read_sql("SELECT * FROM matches WHERE playerId = '{}' OR playerId = '{}'".format(player1Id, player2Id), con=db)
+
+    if yaxis == 'K/D':
+        print()
+
+    if yaxis == 'KPR':
+        print()
+
+    # TODO: find good solution for x values
+
+    fig = px.line(df, y=yaxis, color='playerId')
+    fig.data[0].update(mode='markers+lines')
+    fig.data[1].update(mode='markers+lines')
+
+    cursor.execute("SELECT name FROM players")
+    players = cursor.fetchall()
+    return fig, [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players]
     
 
 if __name__ == '__main__':
