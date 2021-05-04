@@ -8,8 +8,10 @@ import mysql.connector
 from addPlayer import addPlayer
 from config import *
 import plotly.express as px
+import plotly.graph_objects as go
 from getPlayerId import getPlayerId
 import pandas as pd
+from collections import Counter
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -34,8 +36,8 @@ app.layout = html.Div([
         )
     ]),
     html.Div([
-        dcc.Input(id='input', type='text', placeholder='Enter a playername...'),
-        html.Button(id='submit-button-state', n_clicks=0, children='Submit')]),
+        dcc.Input(id='input', type='text', placeholder='Enter nickname...'),
+        html.Button(id='submit-button-state', n_clicks=0, children='Add Player')]),
     html.Br(),
     html.Div([
         html.Img(id='profile-picture'),
@@ -62,8 +64,8 @@ app.layout = html.Div([
                 {'label': 'Triple Kills', 'value': 'triples'},
                 {'label': 'Quad Kills', 'value': 'quads'},
                 {'label': 'Aces', 'value': 'pentas'},
-                {'label': 'K/D', 'value': 'K/D'},
-                {'label': 'KPR', 'value': 'KPR'},
+                {'label': 'K/D', 'value': 'kpd'},
+                {'label': 'KPR', 'value': 'kpr'},
                 {'label': 'Win', 'value': 'win'}],
             ),
         ],
@@ -78,11 +80,16 @@ app.layout = html.Div([
     ]),
 
     dcc.Graph(id='indicator-graphic'),
+    html.Div([
+        dcc.Graph(id='pie-chart-1'),
+    ])
 ])
 
 
 @app.callback(
     Output('players-dd', 'options'),
+    Output('player1', 'options'),
+    Output('player2', 'options'),
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
 )
@@ -93,7 +100,8 @@ def update_output_div(nClicks, input_value):
     # TODO: wait until addPlayer is done
     
     cursor.execute("SELECT name FROM players")
-    return [{"label": i['name'], "value": i['name']} for i in cursor.fetchall()]
+    players = cursor.fetchall()
+    return [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players]
 
 
 @app.callback(
@@ -110,39 +118,76 @@ def update_output_div(input_value):
     else:
         return '', '', ''
 
+
 @app.callback(
     Output('indicator-graphic', 'figure'),
-    Output('player1', 'options'),
-    Output('player2', 'options'),
     Input('player1', 'value'),
     Input('player2', 'value'),
     Input('yaxis', 'value'),
 )
 def update_graph(player1, player2, yaxis):
     
-    # TODO: maybe safe playname as foreign key
-    #       add if to prevent errors
-    player1Id = getPlayerId(player1)
-    player2Id = getPlayerId(player2)
+    if player1 and yaxis:
+        player1Id = getPlayerId(player1)
+    else: 
+        player1Id = ''
+    if player2 and yaxis:
+        player2Id = getPlayerId(player2)
+    else: 
+        player2Id = ''
 
-    df = pd.read_sql("SELECT * FROM matches WHERE playerId = '{}' OR playerId = '{}'".format(player1Id, player2Id), con=db)
+    if yaxis and player1 or yaxis and player2 :
+        query = '''
+            from(bucket: "{}")
+                |> range(start: -30d)\
+                |> filter(fn: (r) => r["_measurement"] == "stats")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["host"] == "{}" or r["host"] == "{}")
+                |> yield(name: "mean")
+        '''.format(bucket, yaxis, player1Id, player2Id)
 
-    if yaxis == 'K/D':
-        print()
+        df = client.query_api().query_data_frame(query, org=org)
 
-    if yaxis == 'KPR':
-        print()
-
-    # TODO: find good solution for x values
-
-    fig = px.line(df, y=yaxis, color='playerId')
-    fig.data[0].update(mode='markers+lines')
-    fig.data[1].update(mode='markers+lines')
-
-    cursor.execute("SELECT name FROM players")
-    players = cursor.fetchall()
-    return fig, [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players]
+        fig = px.line(df, x='_time', y='_value', color='host')
+        fig.data[0].update(mode='markers+lines')
+        if len(fig.data) > 1:
+            fig.data[1].update(mode='markers+lines')
     
+        return fig
+    else:
+        return px.line()
+    
+
+@app.callback(
+    Output('pie-chart-1', 'figure'),
+    Input('player1', 'value'),
+)
+def update_piecharts(player1):
+
+    if player1:
+        player1Id = getPlayerId(player1)
+
+        query = '''
+                from(bucket: "{}")
+                    |> range(start: -30d)\
+                    |> filter(fn: (r) => r["_measurement"] == "stats")
+                    |> filter(fn: (r) => r["_field"] == "map")
+                    |> filter(fn: (r) => r["host"] == "{}")
+                    |> yield(name: "mean")
+            '''.format(bucket, player1Id)
+
+        result = client.query_api().query(query, org=org)
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_value()))
+
+        df = pd.DataFrame(Counter(results).items())
+
+        return px.pie(df, values=1, names=0)
+    else:
+        return px.pie()
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
