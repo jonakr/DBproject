@@ -33,11 +33,11 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='players-dd',
             options=[{"label": i['name'], "value": i['name']} for i in players],
-        )
-    ]),
-    html.Div([
+        ),
         dcc.Input(id='input', type='text', placeholder='Enter nickname...'),
-        html.Button(id='submit-button-state', n_clicks=0, children='Add Player')]),
+        html.Button(id='submit-button-state', n_clicks=0, children='Add Player')
+    ]),
+    
     html.Br(),
     html.Div([
         html.Img(id='profile-picture'),
@@ -82,7 +82,7 @@ app.layout = html.Div([
     dcc.Graph(id='indicator-graphic'),
     html.Div([
         dcc.Graph(id='pie-chart-1'),
-    ])
+    ], id='pie-chart-div')
 ])
 
 
@@ -96,8 +96,6 @@ app.layout = html.Div([
 def update_output_div(nClicks, input_value):
     if input_value:
         addPlayer(input_value)
-        
-    # TODO: wait until addPlayer is done
     
     cursor.execute("SELECT name FROM players")
     players = cursor.fetchall()
@@ -160,9 +158,10 @@ def update_graph(player1, player2, yaxis):
 
 @app.callback(
     Output('pie-chart-1', 'figure'),
+    Output('pie-chart-div', 'style'),
     Input('player1', 'value'),
 )
-def update_piecharts(player1):
+def update_piechart(player1):
 
     if player1:
         player1Id = getPlayerId(player1)
@@ -184,9 +183,9 @@ def update_piecharts(player1):
 
         df = pd.DataFrame(Counter(results).items())
 
-        return px.pie(df, values=1, names=0)
+        return px.pie(df, values=1, names=0), {'display': 'inline'}
     else:
-        return px.pie()
+        return px.pie(), {'display': 'none'}
 
 
 if __name__ == '__main__':
