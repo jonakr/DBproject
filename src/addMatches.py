@@ -1,6 +1,7 @@
 import json
 import requests
-from config import *
+
+from config import token, org, bucket, client, headers
 
 def addMatches(id):
     matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)

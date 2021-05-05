@@ -1,17 +1,22 @@
 import json
 import requests
+import mysql.connector
+import pandas as pd
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-import mysql.connector
-from addPlayer import addPlayer
-from config import *
+
 import plotly.express as px
 import plotly.graph_objects as go
-from getPlayerId import getPlayerId
-import pandas as pd
+
 from collections import Counter
+
+from addPlayer import addPlayer
+from getPlayerId import getPlayerId
+from config import *
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -81,8 +86,21 @@ app.layout = html.Div([
 
     dcc.Graph(id='indicator-graphic'),
     html.Div([
-        dcc.Graph(id='pie-chart-1'),
-    ], id='pie-chart-div')
+
+        html.Div([
+            dcc.Graph(id='pie-chart-1'),
+        ], 
+        id='pie-chart-div1',
+        className="six columns",
+        style={'display': 'none'}),
+
+        html.Div([
+            dcc.Graph(id='pie-chart-2'),
+        ], 
+        id='pie-chart-div2',
+        className="six columns",
+        style={'display': 'none'})
+    ], className="row")
 ])
 
 
@@ -146,19 +164,21 @@ def update_graph(player1, player2, yaxis):
 
         df = client.query_api().query_data_frame(query, org=org)
 
-        fig = px.line(df, x='_time', y='_value', color='host')
+        fig = px.line(df, x='_time', y='_value', color='host', title='',
+                labels=dict(_time="time", _value=yaxis, host='player')        
+        )
         fig.data[0].update(mode='markers+lines')
         if len(fig.data) > 1:
             fig.data[1].update(mode='markers+lines')
     
         return fig
     else:
-        return px.line()
+        return px.line(title='Choose players to compare or only select one player')
     
 
 @app.callback(
     Output('pie-chart-1', 'figure'),
-    Output('pie-chart-div', 'style'),
+    Output('pie-chart-div1', 'style'),
     Input('player1', 'value'),
 )
 def update_piechart(player1):
@@ -183,10 +203,40 @@ def update_piechart(player1):
 
         df = pd.DataFrame(Counter(results).items())
 
-        return px.pie(df, values=1, names=0), {'display': 'inline'}
+        return px.pie(df, values=1, names=0, title=player1), {'display': 'inline'}
     else:
         return px.pie(), {'display': 'none'}
 
+@app.callback(
+    Output('pie-chart-2', 'figure'),
+    Output('pie-chart-div2', 'style'),
+    Input('player2', 'value'),
+)
+def update_piechart(player2):
+
+    if player2:
+        player2Id = getPlayerId(player2)
+
+        query = '''
+                from(bucket: "{}")
+                    |> range(start: -30d)\
+                    |> filter(fn: (r) => r["_measurement"] == "stats")
+                    |> filter(fn: (r) => r["_field"] == "map")
+                    |> filter(fn: (r) => r["host"] == "{}")
+                    |> yield(name: "mean")
+            '''.format(bucket, player2Id)
+
+        result = client.query_api().query(query, org=org)
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_value()))
+
+        df = pd.DataFrame(Counter(results).items())
+
+        return px.pie(df, values=1, names=0, title=player2), {'display': 'inline'}
+    else:
+        return px.pie(), {'display': 'none'}
 
 if __name__ == '__main__':
     app.run_server(debug=True)

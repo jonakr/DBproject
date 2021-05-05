@@ -1,5 +1,5 @@
 import mysql.connector
-from config import *
+from config import db
 
 def getPlayerId(id):
 
