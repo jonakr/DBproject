@@ -1,4 +1,4 @@
-from Database import Database
+from mysql import Mysql
 
 connection = Database(host="localhost", user="root", password="root", database="pets")
 

@@ -1,6 +1,6 @@
 import mysql.connector
 
-class Database:
+class Mysql:
 
     __host = None
     __user = None
