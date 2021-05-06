@@ -1,12 +1,14 @@
 import json
 import requests
 
-from config import token, org, bucket, client, headers
+from influx import Influx
+
+from config import token, org, bucket, url, headers
 
 def addMatches(id):
-    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
+    influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
-    write_api = client.write_api(write_options=SYNCHRONOUS)
+    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
 
     for match in matches['items']:
         matchStats = json.loads(requests.get('https://open.faceit.com/data/v4/matches/' + match['match_id'] + '/stats', headers=headers).content)
@@ -31,4 +33,4 @@ def addMatches(id):
                         kpd = player['player_stats']['K/D Ratio']
 
             data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(id, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
-            write_api.write(bucket, org, data, write_precision='s')
+            influx.write(data)

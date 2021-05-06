@@ -73,6 +73,13 @@ class Mysql:
         self.close()
         return result
 
+    def execute(self, sql):
+        self.open()
+        self.__cursor.execute(sql)
+        result = self.__cursor.fetchall()
+        self.close()
+        return result
+
     def addTable(self, template):
         self.open()
         self.__cursor.execute(template)

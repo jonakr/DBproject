@@ -1,6 +1,3 @@
-import json
-import requests
-import mysql.connector
 import pandas as pd
 
 import dash
@@ -13,24 +10,23 @@ import plotly.graph_objects as go
 
 from collections import Counter
 
+from mysqldb import Mysql
+from influx import Influx
 from addPlayer import addPlayer
-from getPlayerId import getPlayerId
-from config import *
+from config import token, org, url, bucket, dbPlayersLayout
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+db = Mysql(host="localhost", user="root", password="root", database="faceit")
+influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
-cursor = db.cursor(dictionary=True)
-cursor.execute("SHOW TABLES LIKE 'players'")
-result = cursor.fetchone()
-
+result = db.checkIfTableExists('players')
 if not result:
-    cursor.execute(dbPlayersLayout)
+    db.addTable(dbPlayersLayout)
 
-cursor.execute("SELECT name FROM players")
-players = cursor.fetchall()
+players = db.select('players', None, 'name')
 
 app.layout = html.Div([
     html.H3("Faceit Stat Checker"),
@@ -83,8 +79,6 @@ app.layout = html.Div([
             ),
         ],style={'width': '33%', 'display': 'inline-block'})
     ]),
-
-    dcc.Graph(id='indicator-graphic'),
     html.Div([
 
         html.Div([
@@ -100,7 +94,8 @@ app.layout = html.Div([
         id='pie-chart-div2',
         className="six columns",
         style={'display': 'none'})
-    ], className="row")
+    ], className="row"),
+    dcc.Graph(id='indicator-graphic'),
 ])
 
 
@@ -111,13 +106,12 @@ app.layout = html.Div([
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
 )
-def update_output_div(nClicks, input_value):
-    if input_value:
-        addPlayer(input_value)
+def update_output_div(nClicks, input):
+    if input:
+        addPlayer(db, input)
     
-    cursor.execute("SELECT name FROM players")
-    players = cursor.fetchall()
-    return [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players], [{"label": i['name'], "value": i['name']} for i in players]
+    players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
+    return players, players, players
 
 
 @app.callback(
@@ -126,10 +120,9 @@ def update_output_div(nClicks, input_value):
     Output('output-name', 'href'),
     Input('players-dd', 'value'),
 )
-def update_output_div(input_value):
-    if input_value:
-        cursor.execute("SELECT * FROM players WHERE name = '{}'".format(input_value))
-        player = cursor.fetchall()
+def update_output_div(input):
+    if input:
+        player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile')
         return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile'])
     else:
         return '', '', ''
@@ -144,11 +137,11 @@ def update_output_div(input_value):
 def update_graph(player1, player2, yaxis):
     
     if player1 and yaxis:
-        player1Id = getPlayerId(player1)
+        player1Id = db.select('players', "name = '{}'".format(player1), 'playerId')[0]['playerId']
     else: 
         player1Id = ''
     if player2 and yaxis:
-        player2Id = getPlayerId(player2)
+        player2Id = db.select('players', "name = '{}'".format(player2), 'playerId')[0]['playerId']
     else: 
         player2Id = ''
 
@@ -162,7 +155,7 @@ def update_graph(player1, player2, yaxis):
                 |> yield(name: "mean")
         '''.format(bucket, yaxis, player1Id, player2Id)
 
-        df = client.query_api().query_data_frame(query, org=org)
+        df = influx.query(query, True)
 
         fig = px.line(df, x='_time', y='_value', color='host', title='',
                 labels=dict(_time="time", _value=yaxis, host='player')        
@@ -184,18 +177,18 @@ def update_graph(player1, player2, yaxis):
 def update_piechart(player1):
 
     if player1:
-        player1Id = getPlayerId(player1)
+        player1Id = db.select('players', "name = '{}'".format(player1), 'playerId')[0]['playerId']
 
         query = '''
-                from(bucket: "{}")
-                    |> range(start: -30d)\
-                    |> filter(fn: (r) => r["_measurement"] == "stats")
-                    |> filter(fn: (r) => r["_field"] == "map")
-                    |> filter(fn: (r) => r["host"] == "{}")
-                    |> yield(name: "mean")
-            '''.format(bucket, player1Id)
+            from(bucket: "{}")
+                |> range(start: -30d)\
+                |> filter(fn: (r) => r["_measurement"] == "stats")
+                |> filter(fn: (r) => r["_field"] == "map")
+                |> filter(fn: (r) => r["host"] == "{}")
+                |> yield(name: "mean")
+        '''.format(bucket, player1Id)
 
-        result = client.query_api().query(query, org=org)
+        result = influx.query(query)
         results = []
         for table in result:
             for record in table.records:
@@ -207,6 +200,7 @@ def update_piechart(player1):
     else:
         return px.pie(), {'display': 'none'}
 
+
 @app.callback(
     Output('pie-chart-2', 'figure'),
     Output('pie-chart-div2', 'style'),
@@ -215,18 +209,18 @@ def update_piechart(player1):
 def update_piechart(player2):
 
     if player2:
-        player2Id = getPlayerId(player2)
+        player2Id = db.select('players', "name = '{}'".format(player2), 'playerId')[0]['playerId']
 
         query = '''
-                from(bucket: "{}")
-                    |> range(start: -30d)\
-                    |> filter(fn: (r) => r["_measurement"] == "stats")
-                    |> filter(fn: (r) => r["_field"] == "map")
-                    |> filter(fn: (r) => r["host"] == "{}")
-                    |> yield(name: "mean")
-            '''.format(bucket, player2Id)
+            from(bucket: "{}")
+                |> range(start: -30d)\
+                |> filter(fn: (r) => r["_measurement"] == "stats")
+                |> filter(fn: (r) => r["_field"] == "map")
+                |> filter(fn: (r) => r["host"] == "{}")
+                |> yield(name: "mean")
+        '''.format(bucket, player2Id)
 
-        result = client.query_api().query(query, org=org)
+        result = influx.query(query)
         results = []
         for table in result:
             for record in table.records:
