@@ -17,3 +17,4 @@ dbPlayersLayout = "CREATE TABLE players ( \
     faceitElo VARCHAR(255),               \
     steamProfile VARCHAR(255),            \
     PRIMARY KEY (playerId))"
+    

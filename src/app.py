@@ -6,7 +6,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
 import plotly.express as px
-import plotly.graph_objects as go
 
 from collections import Counter
 
@@ -16,8 +15,7 @@ from addPlayer import addPlayer
 from config import token, org, url, bucket, dbPlayersLayout
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, title='Faceit Stats')
 
 db = Mysql(host="localhost", user="root", password="root", database="faceit")
 influx = Influx(token=token, org=org, bucket=bucket, url=url)
@@ -31,19 +29,29 @@ players = db.select('players', None, 'name')
 app.layout = html.Div([
     html.H3("Faceit Stat Checker"),
     html.Div([
+        html.Div([
+            dcc.Input(id='input', type='text', placeholder='Enter the player to add...'),
+            html.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
+        ]),
         dcc.Dropdown(
             id='players-dd',
             options=[{"label": i['name'], "value": i['name']} for i in players],
+            placeholder='Select a player to show information...'
         ),
-        dcc.Input(id='input', type='text', placeholder='Enter nickname...'),
-        html.Button(id='submit-button-state', n_clicks=0, children='Add Player')
     ]),
     
-    html.Br(),
     html.Div([
-        html.Img(id='profile-picture'),
-        html.A(id='output-name'),
-    ]),
+        html.Div(className='svg-background'),
+        html.Div(className='svg-background2'),
+        html.Div(className='circle'),
+        html.Img(className='profile-img', id='profile-pic'),
+        html.Div([
+            html.P(className='title-text', id='username'),
+            html.P(className='info-text', id='steamlink'),
+            html.P(className='desc-text'),
+        ], className='text-container'),
+    ],
+    className="twelve columns theContainer"),
 
     html.Div([
 
@@ -51,8 +59,9 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='player1',
                 options=[{'label': i['name'], 'value': i['name']} for i in players],
+                placeholder='Select player one...'
             ),
-        ],
+        ], 
         style={'width': '33%', 'display': 'inline-block'}),
 
         html.Div([
@@ -68,6 +77,7 @@ app.layout = html.Div([
                 {'label': 'K/D', 'value': 'kpd'},
                 {'label': 'KPR', 'value': 'kpr'},
                 {'label': 'Win', 'value': 'win'}],
+                placeholder='Select the stat to compare...'
             ),
         ],
         style={'width': '33%', 'display': 'inline-block'}),
@@ -76,9 +86,12 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='player2',
                 options=[{'label': i['name'], 'value': i['name']} for i in players],
+                placeholder='Select player two...'
             ),
-        ],style={'width': '33%', 'display': 'inline-block'})
+        ],
+        style={'width': '33%', 'display': 'inline-block'}),
     ]),
+
     html.Div([
 
         html.Div([
@@ -95,6 +108,7 @@ app.layout = html.Div([
         className="six columns",
         style={'display': 'none'})
     ], className="row"),
+    
     dcc.Graph(id='indicator-graphic'),
 ])
 
@@ -115,9 +129,9 @@ def update_output_div(nClicks, input):
 
 
 @app.callback(
-    Output('output-name', 'children'),
-    Output('profile-picture', 'src'),
-    Output('output-name', 'href'),
+    Output('username', 'children'),
+    Output('profile-pic', 'src'),
+    Output('steamlink', 'children'),
     Input('players-dd', 'value'),
 )
 def update_output_div(input):
@@ -166,71 +180,52 @@ def update_graph(player1, player2, yaxis):
     
         return fig
     else:
-        return px.line(title='Choose players to compare or only select one player')
+        return px.line(title='Choose one or more players to show their stats!')
     
 
 @app.callback(
     Output('pie-chart-1', 'figure'),
     Output('pie-chart-div1', 'style'),
-    Input('player1', 'value'),
-)
-def update_piechart(player1):
-
-    if player1:
-        player1Id = db.select('players', "name = '{}'".format(player1), 'playerId')[0]['playerId']
-
-        query = '''
-            from(bucket: "{}")
-                |> range(start: -30d)\
-                |> filter(fn: (r) => r["_measurement"] == "stats")
-                |> filter(fn: (r) => r["_field"] == "map")
-                |> filter(fn: (r) => r["host"] == "{}")
-                |> yield(name: "mean")
-        '''.format(bucket, player1Id)
-
-        result = influx.query(query)
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_value()))
-
-        df = pd.DataFrame(Counter(results).items())
-
-        return px.pie(df, values=1, names=0, title=player1), {'display': 'inline'}
-    else:
-        return px.pie(), {'display': 'none'}
-
-
-@app.callback(
     Output('pie-chart-2', 'figure'),
     Output('pie-chart-div2', 'style'),
+    Input('player1', 'value'),
     Input('player2', 'value'),
 )
-def update_piechart(player2):
+def update_piechart(player1, player2):
 
-    if player2:
-        player2Id = db.select('players', "name = '{}'".format(player2), 'playerId')[0]['playerId']
+    if player1 and not player2:
+        return createPieChart(player1), {'display': 'inline'}, px.pie(), {'display': 'none'}
+    if player2 and not player1:
+        return px.pie(), {'display': 'none'}, createPieChart(player2), {'display': 'inline'}
+    if player1 and player2:
+        return createPieChart(player1), {'display': 'inline'}, createPieChart(player2), {'display': 'inline'}
+    else:
+        return px.pie(), {'display': 'none'}, px.pie(), {'display': 'none'}
 
-        query = '''
+
+def createPieChart(player):
+
+    playerId = db.select('players', "name = '{}'".format(player), 'playerId')[0]['playerId']
+
+    query = '''
             from(bucket: "{}")
                 |> range(start: -30d)\
                 |> filter(fn: (r) => r["_measurement"] == "stats")
                 |> filter(fn: (r) => r["_field"] == "map")
                 |> filter(fn: (r) => r["host"] == "{}")
                 |> yield(name: "mean")
-        '''.format(bucket, player2Id)
+        '''.format(bucket, playerId)
 
-        result = influx.query(query)
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_value()))
+    result = influx.query(query)
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_value()))
 
-        df = pd.DataFrame(Counter(results).items())
+    df = pd.DataFrame(Counter(results).items())
 
-        return px.pie(df, values=1, names=0, title=player2), {'display': 'inline'}
-    else:
-        return px.pie(), {'display': 'none'}
+    return px.pie(df, values=1, names=0, title="Maps played: " + player)
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
