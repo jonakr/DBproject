@@ -191,15 +191,6 @@ def update_output_div(input):
     Input('yaxis', 'value'),
 )
 def update_graph(player1, player2, yaxis):
-    
-    if player1 and yaxis:
-        player1Id = db.select('players', "name = '{}'".format(player1), 'playerId')[0]['playerId']
-    else: 
-        player1Id = ''
-    if player2 and yaxis:
-        player2Id = db.select('players', "name = '{}'".format(player2), 'playerId')[0]['playerId']
-    else: 
-        player2Id = ''
 
     if yaxis and player1 or yaxis and player2 :
         query = '''
@@ -209,7 +200,7 @@ def update_graph(player1, player2, yaxis):
                 |> filter(fn: (r) => r["_field"] == "{}")
                 |> filter(fn: (r) => r["host"] == "{}" or r["host"] == "{}")
                 |> yield(name: "mean")
-        '''.format(bucket, yaxis, player1Id, player2Id)
+        '''.format(bucket, yaxis, player1, player2)
 
         df = influx.query(query, True)
 
@@ -222,7 +213,7 @@ def update_graph(player1, player2, yaxis):
     
         return fig
     else:
-        return px.line(title='Choose one or more players to show their stats!')
+        return px.line()
     
 
 @app.callback(
@@ -247,8 +238,6 @@ def update_piechart(player1, player2):
 
 def createPieChart(player):
 
-    playerId = db.select('players', "name = '{}'".format(player), 'playerId')[0]['playerId']
-
     query = '''
             from(bucket: "{}")
                 |> range(start: -30d)\
@@ -256,7 +245,7 @@ def createPieChart(player):
                 |> filter(fn: (r) => r["_field"] == "map")
                 |> filter(fn: (r) => r["host"] == "{}")
                 |> yield(name: "mean")
-        '''.format(bucket, playerId)
+        '''.format(bucket, player)
 
     result = influx.query(query)
     results = []

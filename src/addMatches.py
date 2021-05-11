@@ -5,7 +5,7 @@ from influx import Influx
 
 from config import token, org, bucket, url, headers
 
-def addMatches(id):
+def addMatches(name, id):
     influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
     matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
@@ -32,5 +32,5 @@ def addMatches(id):
                         kpr = player['player_stats']['K/R Ratio']
                         kpd = player['player_stats']['K/D Ratio']
 
-            data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(id, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
+            data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(name, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
             influx.write(data)

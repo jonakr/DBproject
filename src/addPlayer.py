@@ -17,4 +17,4 @@ def addPlayer(db, name):
     if not playerExists:
         db.insert('players', player['player_id'], player['nickname'], player['avatar'], player['country'], player['games']['csgo']['skill_level'], player['games']['csgo']['faceit_elo'], player['steam_id_64'])
 
-    addMatches(player['player_id'])
+    addMatches(name, player['player_id'])
