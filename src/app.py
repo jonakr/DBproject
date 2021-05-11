@@ -31,13 +31,15 @@ players = db.select('players', None, 'name')
 
 app.layout = html.Div([
 
-    html.H3("Faceit Stat Checker"),
+    html.H2("Faceit Stat Checker", style={"color": "#fff"}),
     dbc.Row([
         dbc.Col([
-            dcc.Input(id='input', type='text', placeholder='Enter the player to add...'),
-            dbc.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
+            dbc.Input(id='input', type='text', placeholder='Enter the player to add...'),
         ]),
-    ]),
+        dbc.Col([
+            dbc.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
+        ])
+    ], style={"margin-bottom": "20px"}),
 
     dbc.Row([
 
@@ -141,7 +143,7 @@ app.layout = html.Div([
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
 )
-def update_output_div(nClicks, input):
+def callbackAddPlayer(nClicks, input):
     if input:
         addPlayer(db, input)
     
@@ -157,7 +159,7 @@ def update_output_div(nClicks, input):
     Output('player1-level', 'src'),
     Input('player1', 'value'),
 )
-def update_output_div(input):
+def callbackUpdatePlayer1Card(input):
     if input:
         player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
@@ -174,7 +176,7 @@ def update_output_div(input):
     Output('player2-level', 'src'),
     Input('player2', 'value'),
 )
-def update_output_div(input):
+def callbackUpdatePlayer2Card(input):
     if input:
         player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
@@ -204,7 +206,7 @@ def update_graph(player1, player2, yaxis):
 
         df = influx.query(query, True)
 
-        fig = px.line(df, x='_time', y='_value', color='host', title='',
+        fig = px.line(df, x='_time', y='_value', color='host', template="plotly_dark", title='',
                 labels=dict(_time="time", _value=yaxis, host='player')        
         )
         fig.data[0].update(mode='markers+lines')
@@ -213,7 +215,7 @@ def update_graph(player1, player2, yaxis):
     
         return fig
     else:
-        return px.line()
+        return px.line(template="plotly_dark")
     
 
 @app.callback(
@@ -255,7 +257,7 @@ def createPieChart(player):
 
     df = pd.DataFrame(Counter(results).items())
 
-    return px.pie(df, values=1, names=0, title="Maps played: " + player)
+    return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player)
 
 
 if __name__ == '__main__':
