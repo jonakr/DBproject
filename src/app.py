@@ -3,11 +3,14 @@ import pandas as pd
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
 import plotly.express as px
 
 from collections import Counter
+
+import base64
 
 from mysqldb import Mysql
 from influx import Influx
@@ -27,44 +30,26 @@ if not result:
 players = db.select('players', None, 'name')
 
 app.layout = html.Div([
+
     html.H3("Faceit Stat Checker"),
-    html.Div([
-        html.Div([
+    dbc.Row([
+        dbc.Col([
             dcc.Input(id='input', type='text', placeholder='Enter the player to add...'),
-            html.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
+            dbc.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
         ]),
-        dcc.Dropdown(
-            id='players-dd',
-            options=[{"label": i['name'], "value": i['name']} for i in players],
-            placeholder='Select a player to show information...'
-        ),
     ]),
-    
-    html.Div([
-        html.Div(className='svg-background'),
-        html.Div(className='svg-background2'),
-        html.Div(className='circle'),
-        html.Img(className='profile-img', id='profile-pic'),
-        html.Div([
-            html.P(className='title-text', id='username'),
-            html.P(className='info-text', id='steamlink'),
-            html.P(className='desc-text'),
-        ], className='text-container'),
-    ],
-    className="twelve columns theContainer"),
 
-    html.Div([
+    dbc.Row([
 
-        html.Div([
+        dbc.Col([
             dcc.Dropdown(
                 id='player1',
                 options=[{'label': i['name'], 'value': i['name']} for i in players],
                 placeholder='Select player one...'
             ),
-        ], 
-        style={'width': '33%', 'display': 'inline-block'}),
+        ], md=4), 
 
-        html.Div([
+        dbc.Col([
             dcc.Dropdown(
                 id='yaxis',
                 options=[{'label': 'Kills', 'value': 'kills'},
@@ -79,42 +64,78 @@ app.layout = html.Div([
                 {'label': 'Win', 'value': 'win'}],
                 placeholder='Select the stat to compare...'
             ),
-        ],
-        style={'width': '33%', 'display': 'inline-block'}),
+        ], md=4),
 
-        html.Div([
+        dbc.Col([
             dcc.Dropdown(
                 id='player2',
                 options=[{'label': i['name'], 'value': i['name']} for i in players],
                 placeholder='Select player two...'
             ),
-        ],
-        style={'width': '33%', 'display': 'inline-block'}),
+        ], md=4),
+
+    ], no_gutters=True, style={"margin-bottom": "20px"}),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.CardGroup([
+                dbc.Card([
+                    dbc.CardImg(id='player1-img'),
+                    dbc.CardBody([
+                        html.H4(id='player1-name'),
+                        dbc.Table(html.Tbody([html.Tr([
+                            html.Td(html.Img(id='player1-level', style={'width': '50px', 'height': '50px'})),
+                            html.Td(id='player1-elo')
+                        ])])),
+                        dbc.Button("Go to Steam Profile", id='player1-steam')
+                    ])
+                ], color="dark", inverse=True),
+
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H1("VS", style={"text-align": "center", "font-size": "80px"}),
+                    ])
+                ], color="dark", inverse=True),
+
+                dbc.Card([
+                    dbc.CardImg(id='player2-img'),
+                    dbc.CardBody([
+                        html.H4(id='player2-name'),
+                        dbc.Table(html.Tbody([html.Tr([
+                            html.Td(html.Img(id='player2-level', style={'width': '50px', 'height': '50px'})),
+                            html.Td(id='player2-elo')
+                        ])])),
+                        dbc.Button("Go to Steam Profile", id='player2-steam')
+                    ])
+                ], color="dark", inverse=True)
+            ]),
+        ], width={"size": 6, "offset": 3})
     ]),
 
-    html.Div([
+    dbc.Row([
 
-        html.Div([
+        dbc.Col([
             dcc.Graph(id='pie-chart-1'),
         ], 
         id='pie-chart-div1',
-        className="six columns",
+        width=6,
         style={'display': 'none'}),
 
-        html.Div([
+        dbc.Col([
             dcc.Graph(id='pie-chart-2'),
         ], 
         id='pie-chart-div2',
-        className="six columns",
+        width=6,
         style={'display': 'none'})
-    ], className="row"),
+    ], no_gutters=True,),
     
-    dcc.Graph(id='indicator-graphic'),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='indicator-graphic')),
+    ]),
 ])
 
 
 @app.callback(
-    Output('players-dd', 'options'),
     Output('player1', 'options'),
     Output('player2', 'options'),
     Input('submit-button-state', 'n_clicks'),
@@ -125,21 +146,42 @@ def update_output_div(nClicks, input):
         addPlayer(db, input)
     
     players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
-    return players, players, players
+    return players, players
 
 
 @app.callback(
-    Output('username', 'children'),
-    Output('profile-pic', 'src'),
-    Output('steamlink', 'children'),
-    Input('players-dd', 'value'),
+    Output('player1-name', 'children'),
+    Output('player1-img', 'src'),
+    Output('player1-steam', 'href'),
+    Output('player1-elo', 'children'),
+    Output('player1-level', 'src'),
+    Input('player1', 'value'),
 )
 def update_output_div(input):
     if input:
-        player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile')
-        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile'])
+        player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
+        img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
+        encoded_img = base64.b64encode(open(img_filename, 'rb').read())
+        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
     else:
-        return '', '', ''
+        return '', '', '', '', ''
+
+@app.callback(
+    Output('player2-name', 'children'),
+    Output('player2-img', 'src'),
+    Output('player2-steam', 'href'),
+    Output('player2-elo', 'children'),
+    Output('player2-level', 'src'),
+    Input('player2', 'value'),
+)
+def update_output_div(input):
+    if input:
+        player = db.select('players', "name = '{}'".format(input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
+        img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
+        encoded_img = base64.b64encode(open(img_filename, 'rb').read())
+        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
+    else:
+        return '', '', '', '', ''
 
 
 @app.callback(
