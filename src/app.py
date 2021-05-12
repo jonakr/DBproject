@@ -1,5 +1,3 @@
-import pandas as pd
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -8,13 +6,12 @@ from dash.dependencies import Input, Output, State
 
 import plotly.express as px
 
-from collections import Counter
-
 import base64
 
 from mysqldb import Mysql
 from influx import Influx
 from addPlayer import addPlayer
+from createPieChart import createPieChart
 from config import token, org, url, bucket, dbPlayersLayout
 
 
@@ -39,6 +36,18 @@ app.layout = html.Div([
         dbc.Col([
             dbc.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
         ])
+    ], style={"margin-bottom": "20px"}),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Alert(
+                "This player doesn't exist!",
+                id="alert",
+                color="danger",
+                is_open=True,
+                dismissable=True,
+            )
+        ]),
     ], style={"margin-bottom": "20px"}),
 
     dbc.Row([
@@ -140,15 +149,23 @@ app.layout = html.Div([
 @app.callback(
     Output('player1', 'options'),
     Output('player2', 'options'),
+    Output('alert', 'is_open'),
+    Output('input', 'value'),
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
+    State('alert', 'is_open')
 )
-def callbackAddPlayer(nClicks, input):
+def callbackAddPlayer(nClicks, input, is_open):
     if input:
-        addPlayer(db, input)
-    
-    players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
-    return players, players
+        if addPlayer(db, input):
+            players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
+            return players, players, not is_open, ''
+        else:
+            players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
+            return players, players, True, ''
+    else:
+        players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
+        return players, players, not is_open, ''
 
 
 @app.callback(
@@ -236,28 +253,6 @@ def update_piechart(player1, player2):
         return createPieChart(player1), {'display': 'inline'}, createPieChart(player2), {'display': 'inline'}
     else:
         return px.pie(), {'display': 'none'}, px.pie(), {'display': 'none'}
-
-
-def createPieChart(player):
-
-    query = '''
-            from(bucket: "{}")
-                |> range(start: -30d)\
-                |> filter(fn: (r) => r["_measurement"] == "stats")
-                |> filter(fn: (r) => r["_field"] == "map")
-                |> filter(fn: (r) => r["host"] == "{}")
-                |> yield(name: "mean")
-        '''.format(bucket, player)
-
-    result = influx.query(query)
-    results = []
-    for table in result:
-        for record in table.records:
-            results.append((record.get_value()))
-
-    df = pd.DataFrame(Counter(results).items())
-
-    return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player)
 
 
 if __name__ == '__main__':
