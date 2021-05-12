@@ -34,4 +34,4 @@ def createPieChart(player):
     if df.empty:
         df = pd.DataFrame(data={0: ["hasn't played in the last month"], 1: [1]})
 
-    return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player)
+    return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player, color_discrete_sequence=px.colors.sequential.RdBu)

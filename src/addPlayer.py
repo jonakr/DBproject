@@ -1,7 +1,7 @@
 import json
 import requests
 
-from config import headers, dbPlayersLayout
+from config import headers, dbPlayersLayout, avatarPng
 from addMatches import addMatches
 
 def addPlayer(db, name):
@@ -15,10 +15,16 @@ def addPlayer(db, name):
         playerExists = db.select('players', "name = '{}'".format(name), 'name')
 
         if not playerExists:
-            db.insert('players', player['player_id'], player['nickname'], player['avatar'], player['country'], player['games']['csgo']['skill_level'], player['games']['csgo']['faceit_elo'], player['steam_id_64'])
+
+            if not player['avatar']:
+                avatar = avatarPng
+            else:
+                avatar = player['avatar']
+
+            db.insert('players', player['player_id'], player['nickname'], avatar, player['country'], player['games']['csgo']['skill_level'], player['games']['csgo']['faceit_elo'], player['steam_id_64'])
 
         addMatches(name, player['player_id'])
         return True
-        
+
     else:
         return False

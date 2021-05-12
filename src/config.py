@@ -3,6 +3,8 @@ org = "cheekyagentpotter@gmail.com"
 bucket = "test"
 url="https://eu-central-1-1.aws.cloud2.influxdata.com"
 
+avatarPng = "https://lh3.googleusercontent.com/proxy/Qsc4M49-5CW6e3YOUovsxeSA18RcHjd7pzZbO5xVsFZ9ZO_gP9cmXc2C11KPVparzrBR5JfemZsiJGBlzbm1VR--Gd8ZHFcnre_TVtID2f3fC2fJTF0w4Mc"
+
 headers = {
     'accept': 'application/json',
     'Authorization': 'Bearer 85c91c97-e563-4ee8-acc1-aea288b42369',

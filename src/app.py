@@ -31,7 +31,7 @@ app.layout = html.Div([
     html.H1("Analyze your Faceit CS:GO Statistics and compare it with others!", style={"color": "#fff"}),
     dbc.Row([
         dbc.Col([
-            dbc.Input(id='input', type='text', placeholder='Enter the player to add...'),
+            dbc.Input(id='input', type='text', placeholder='Enter a playername...       (Matches will be updated if player already exists!)'),
         ]),
         dbc.Col([
             dbc.Button(id='submit-button-state', n_clicks=0, children='Add Player'),
@@ -245,9 +245,11 @@ def update_graph(player1, player2, yaxis):
 
         if not df.empty:
             fig = px.line(df, x='_time', y='_value', color='host', template="plotly_dark", title='',
-                    labels=dict(_time="time", _value=yaxis, host='player')        
+                    labels=dict(_time="time", _value=yaxis, host='player'),
+                    color_discrete_sequence=['#67001f', '#d6604d']       
             )
             fig.data[0].update(mode='markers+lines')
+
             if len(fig.data) > 1:
                 fig.data[1].update(mode='markers+lines')
         
