@@ -243,14 +243,18 @@ def update_graph(player1, player2, yaxis):
 
         df = influx.query(query, True)
 
-        fig = px.line(df, x='_time', y='_value', color='host', template="plotly_dark", title='',
-                labels=dict(_time="time", _value=yaxis, host='player')        
-        )
-        fig.data[0].update(mode='markers+lines')
-        if len(fig.data) > 1:
-            fig.data[1].update(mode='markers+lines')
-    
-        return fig
+        if not df.empty:
+            fig = px.line(df, x='_time', y='_value', color='host', template="plotly_dark", title='',
+                    labels=dict(_time="time", _value=yaxis, host='player')        
+            )
+            fig.data[0].update(mode='markers+lines')
+            if len(fig.data) > 1:
+                fig.data[1].update(mode='markers+lines')
+        
+            return fig
+        else:
+            return px.line(template="plotly_dark")
+
     else:
         return px.line(template="plotly_dark")
     

@@ -23,11 +23,15 @@ def createPieChart(player):
         '''.format(bucket, player)
 
     result = influx.query(query)
+
     results = []
     for table in result:
         for record in table.records:
             results.append((record.get_value()))
 
     df = pd.DataFrame(Counter(results).items())
+
+    if df.empty:
+        df = pd.DataFrame(data={0: ["hasn't played in the last month"], 1: [1]})
 
     return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player)
