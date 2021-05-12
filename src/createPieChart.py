@@ -8,10 +8,9 @@ from influx import Influx
 
 from collections import Counter
 
-
-influx = Influx(token=token, org=org, bucket=bucket, url=url)
-
 def createPieChart(player):
+
+    influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
     query = '''
             from(bucket: "{}")
