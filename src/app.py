@@ -28,7 +28,7 @@ players = db.select('players', None, 'name')
 
 app.layout = html.Div([
 
-    html.H2("Faceit Stat Checker", style={"color": "#fff"}),
+    html.H1("Analyze your Faceit CS:GO Statistics and compare it with others!", style={"color": "#fff"}),
     dbc.Row([
         dbc.Col([
             dbc.Input(id='input', type='text', placeholder='Enter the player to add...'),
@@ -44,8 +44,9 @@ app.layout = html.Div([
                 "This player doesn't exist!",
                 id="alert",
                 color="danger",
-                is_open=True,
+                is_open=False,
                 dismissable=True,
+                duration=4000
             )
         ]),
     ], style={"margin-bottom": "20px"}),
@@ -100,13 +101,13 @@ app.layout = html.Div([
                         ])])),
                         dbc.Button("Go to Steam Profile", id='player1-steam')
                     ])
-                ], color="dark", inverse=True),
+                ], id='card-player1', color="dark", inverse=True),
 
                 dbc.Card([
                     dbc.CardBody([
                         html.H1("VS", style={"text-align": "center", "font-size": "80px"}),
                     ])
-                ], color="dark", inverse=True),
+                ], id='card-vs', color="dark", inverse=True),
 
                 dbc.Card([
                     dbc.CardImg(id='player2-img'),
@@ -118,9 +119,9 @@ app.layout = html.Div([
                         ])])),
                         dbc.Button("Go to Steam Profile", id='player2-steam')
                     ])
-                ], color="dark", inverse=True)
+                ], id='card-player2', color="dark", inverse=True)
             ]),
-        ], width={"size": 6, "offset": 3})
+        ], id='card-column', width={"size": 6, "offset": 3})
     ]),
 
     dbc.Row([
@@ -153,19 +154,18 @@ app.layout = html.Div([
     Output('input', 'value'),
     Input('submit-button-state', 'n_clicks'),
     State('input', 'value'),
-    State('alert', 'is_open')
 )
-def callbackAddPlayer(nClicks, input, is_open):
+def callbackAddPlayer(n_clicks, input):
     if input:
         if addPlayer(db, input):
             players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
-            return players, players, not is_open, ''
+            return players, players, False, ''
         else:
             players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
             return players, players, True, ''
     else:
         players = [{"label": i['name'], "value": i['name']} for i in db.select('players', None, 'name')]
-        return players, players, not is_open, ''
+        return players, players, False, ''
 
 
 @app.callback(
@@ -185,6 +185,7 @@ def callbackUpdatePlayer1Card(input):
     else:
         return '', '', '', '', ''
 
+
 @app.callback(
     Output('player2-name', 'children'),
     Output('player2-img', 'src'),
@@ -201,6 +202,25 @@ def callbackUpdatePlayer2Card(input):
         return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
     else:
         return '', '', '', '', ''
+
+
+@app.callback(
+    Output('card-player1', 'style'),
+    Output('card-vs', 'style'),
+    Output('card-player2', 'style'),
+    Output('card-column', 'width'),
+    Input('player1', 'value'),
+    Input('player2', 'value'),
+)
+def showHidePlayerCard(player1, player2):
+    if player1 and not player2:
+        return {'display': 'inline'}, {'display': 'none'}, {'display': 'none'}, {"size": 2, "offset": 3}
+    if not player1 and player2:
+        return {'display': 'none'}, {'display': 'none'}, {'display': 'inline'}, {"size": 2, "offset": 7}
+    if player1 and player2:
+        return {'display': 'inline'}, {'display': 'inline'}, {'display': 'inline'}, {"size": 6, "offset": 3}
+    else:
+        return {'display': 'none'}, {'display': 'none'}, {'display': 'none'}, {"size": 6, "offset": 3}
 
 
 @app.callback(

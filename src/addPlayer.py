@@ -19,6 +19,6 @@ def addPlayer(db, name):
 
         addMatches(name, player['player_id'])
         return True
-
+        
     else:
         return False
