@@ -1,5 +1,6 @@
 import mysql.connector
 
+
 class Mysql:
     """
     A class used to connect a MySQL database
@@ -45,7 +46,7 @@ class Mysql:
     __user = None
     __password = None
     __database = None
-    
+
     __cursor = None
     __connection = None
 
@@ -125,7 +126,8 @@ class Mysql:
         if kwargs:
             keys = kwargs.keys()
             values = kwargs.values()
-            query += "(" + ",".join(["`%s`"]*len(keys)) % tuple(keys) + ") VALUES(" + ",".join(["%s"]*len(values)) + ")"
+            query += "(" + ",".join(["`%s`"]*len(keys)) % tuple(keys) + \
+                ") VALUES(" + ",".join(["%s"]*len(values)) + ")"
         elif args:
             values = args
             query += " VALUES(" + ",".join(["%s"]*len(values)) + ")"
@@ -197,7 +199,7 @@ class Mysql:
         self.open()
         self.__cursor.execute(template)
         self.close()
-    
+
     def checkIfTableExists(self, table):
         """
         Check if a table exists inside the database.

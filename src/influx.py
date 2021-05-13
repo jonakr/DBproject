@@ -1,6 +1,7 @@
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
+
 class Influx:
     """
     A class used to connect to a InfluxDB Cloud 2.0
@@ -65,7 +66,7 @@ class Influx:
         """
 
         # TODO: Try Except
-        client =  InfluxDBClient(url=self.__url, token=self.__token)
+        client = InfluxDBClient(url=self.__url, token=self.__token)
         self.__client = client
 
     def close(self):
@@ -102,7 +103,7 @@ class Influx:
         df : bool
             can be set to true to return the query as data frame
         """
-        
+
         self.open()
         if df:
             result = self.__client.query_api().query_data_frame(query, org=self.__org)

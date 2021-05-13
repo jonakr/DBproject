@@ -1,7 +1,7 @@
 token = "ci_zJ9DSnTbO4fSjRVxKjn2956LhXDre0y8DkMNgMmpp1ptQDsNe_u5RMwxGr0XAN2pjyHOuJ5yAd1KfnQGQUg=="
 org = "cheekyagentpotter@gmail.com"
 bucket = "test"
-url="https://eu-central-1-1.aws.cloud2.influxdata.com"
+url = "https://eu-central-1-1.aws.cloud2.influxdata.com"
 
 avatarPng = "https://lh3.googleusercontent.com/proxy/Qsc4M49-5CW6e3YOUovsxeSA18RcHjd7pzZbO5xVsFZ9ZO_gP9cmXc2C11KPVparzrBR5JfemZsiJGBlzbm1VR--Gd8ZHFcnre_TVtID2f3fC2fJTF0w4Mc"
 
@@ -19,4 +19,3 @@ dbPlayersLayout = "CREATE TABLE players ( \
     faceitElo VARCHAR(255),               \
     steamProfile VARCHAR(255),            \
     PRIMARY KEY (playerId))"
-    

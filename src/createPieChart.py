@@ -8,6 +8,7 @@ from influx import Influx
 
 from collections import Counter
 
+
 def createPieChart(player):
     """
     Querys all maps played from the influx database for a specific player,
@@ -47,8 +48,9 @@ def createPieChart(player):
     # count occurances of each map and convert to data frame
     df = pd.DataFrame(Counter(results).items())
 
-    # create 100% pie chart data frame with error message 
+    # create 100% pie chart data frame with error message
     if df.empty:
-        df = pd.DataFrame(data={0: ["hasn't played in the last month"], 1: [1]})
+        df = pd.DataFrame(
+            data={0: ["hasn't played in the last month"], 1: [1]})
 
     return px.pie(df, values=1, names=0, template="plotly_dark", title="Maps played by " + player, color_discrete_sequence=px.colors.sequential.RdBu)

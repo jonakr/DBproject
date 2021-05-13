@@ -5,6 +5,7 @@ from influx import Influx
 
 from config import token, org, bucket, url, headers
 
+
 def addMatches(name, id):
     """
     Pulls all matches the given player has played from the API
@@ -22,11 +23,13 @@ def addMatches(name, id):
     influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
     # pull the last 20 matches of a player via the API
-    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' + id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
+    matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' +
+                         id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
 
     # iterate over every match and pull specific data for each match from the API
     for match in matches['items']:
-        matchStats = json.loads(requests.get('https://open.faceit.com/data/v4/matches/' + match['match_id'] + '/stats', headers=headers).content)
+        matchStats = json.loads(requests.get(
+            'https://open.faceit.com/data/v4/matches/' + match['match_id'] + '/stats', headers=headers).content)
 
         # set the timestamp
         timestamp = match['started_at']
@@ -51,5 +54,6 @@ def addMatches(name, id):
                         kpd = player['player_stats']['K/D Ratio']
 
             # write data to the database
-            data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(name, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
+            data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(
+                name, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
             influx.write(data)
