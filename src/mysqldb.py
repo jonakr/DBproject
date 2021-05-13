@@ -75,10 +75,8 @@ class Mysql:
 
         Raises
         ------
-        ER_ACCESS_DENIED_ERROR
-            If login credentials are wrong
-        ER_BAD_DB_ERROR
-            If database doesn't exist
+        mysql.connector.Error
+            throws error if connection fails
         """
 
         try:
@@ -92,12 +90,7 @@ class Mysql:
             self.__cursor = cnx.cursor(buffered=True, dictionary=True)
 
         except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print('Something is wrong with your user name or password')
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print('Database does not exists')
-            else:
-                print(err)
+            print("Something went wrong: {}".format(err))
 
     def close(self):
         """
