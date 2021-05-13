@@ -27,15 +27,8 @@ def addPlayer(db, name):
     # check if player exists, else return false
     if not 'errors' in player:
 
-        # if there is no table players, add it
-        result = db.checkIfTableExists('players')
-        if not result:
-            db.addTable(dbPlayersLayout)
-
         # check if player already exists
-        playerExists = db.select('players', "name = '{}'".format(name), 'name')
-
-        if not playerExists:
+        if not db.select('players', "name = '{}'".format(name), 'name'):
             
             # check if player data contains an avatar or set default
             if not player['avatar']:
