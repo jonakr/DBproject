@@ -53,6 +53,7 @@ class Influx:
         url : str
             the url of the used InfluxDB Cloud 2.0
         """
+
         self.__token = token
         self.__org = org
         self.__bucket = bucket
@@ -62,6 +63,7 @@ class Influx:
         """
         opens connection to database and sets __client attribute
         """
+
         # TODO: Try Except
         client =  InfluxDBClient(url=self.__url, token=self.__token)
         self.__client = client
@@ -70,6 +72,7 @@ class Influx:
         """
         closes the connection to the database
         """
+
         self.__client.close()
 
     def write(self, data):
@@ -82,6 +85,7 @@ class Influx:
             data that is written to the database with the following structure:
             "bucket,host=host1 data1=,data2=,... timestamp"
         """
+
         self.open()
         write_api = self.__client.write_api(write_options=SYNCHRONOUS)
         write_api.write(self.__bucket, self.__org, data, write_precision='s')
@@ -98,6 +102,7 @@ class Influx:
         df : bool
             can be set to true to return the query as data frame
         """
+        
         self.open()
         if df:
             result = self.__client.query_api().query_data_frame(query, org=self.__org)
