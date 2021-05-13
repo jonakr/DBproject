@@ -17,14 +17,19 @@ from config import token, org, url, bucket, dbPlayersLayout
 
 app = dash.Dash(__name__, title='Faceit Stats')
 
+# initialize database connections
 db = Mysql(host="localhost", user="root", password="root", database="faceit")
 influx = Influx(token=token, org=org, bucket=bucket, url=url)
 
+# check if table 'players' exists
 result = db.checkIfTableExists('players')
 if not result:
     db.addTable(dbPlayersLayout)
 
+# select all names from the 'players' table
 players = db.select('players', None, 'name')
+
+
 
 # ------------------ APP LAYOUT ------------------
 
@@ -35,7 +40,7 @@ app.layout = html.Div([
     dbc.Row([
         dbc.Col([
             dbc.Input(id='input', type='text',
-                      placeholder='Enter a playername...       (Matches will be updated if player already exists!)'),
+                      placeholder='Enter a playername...       (Matches will be updated if the player already exists!)'),
         ]),
         dbc.Col([
             dbc.Button(id='submit-button-state',
@@ -197,7 +202,9 @@ def callbackUpdatePlayer1Card(input):
             input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
         encoded_img = base64.b64encode(open(img_filename, 'rb').read())
-        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
+        return player[0]['name'], player[0]['avatar'], \
+                "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), \
+                player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
     else:
         return '', '', '', '', ''
 
@@ -216,7 +223,9 @@ def callbackUpdatePlayer2Card(input):
             input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
         encoded_img = base64.b64encode(open(img_filename, 'rb').read())
-        return player[0]['name'], player[0]['avatar'], "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
+        return player[0]['name'], player[0]['avatar'], \
+                "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), \
+                player[0]['faceitElo'], 'data:image/png;base64,{}'.format(encoded_img.decode())
     else:
         return '', '', '', '', ''
 
