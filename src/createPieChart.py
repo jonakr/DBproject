@@ -2,7 +2,7 @@ import pandas as pd
 
 import plotly.express as px
 
-from config import token, org, bucket, url
+from dbCredentials import token, org, bucket, url
 
 from influx import Influx
 

@@ -3,7 +3,8 @@ import requests
 
 from influx import Influx
 
-from config import token, org, bucket, url, headers
+from config import headers
+from dbCredentials import token, org, bucket, url
 
 
 def addMatches(name, id):
