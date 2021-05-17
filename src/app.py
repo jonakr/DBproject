@@ -109,11 +109,17 @@ app.layout = html.Div([
                     dbc.CardImg(id='player1-img'),
                     dbc.CardBody([
                         html.H4(id='player1-name'),
-                        dbc.Table(html.Tbody([html.Tr([
-                            html.Td(html.Img(id='player1-level',
+                        dbc.Table(html.Tbody([
+                            html.Tr([
+                                html.Td(html.Img(id='player1-level',
                                     style={'width': '50px', 'height': '50px'})),
-                            html.Td(id='player1-elo')
-                        ])])),
+                                html.Td(id='player1-elo')
+                            ]),
+                            html.Tr([
+                                html.Td(id='player1-label'),
+                                html.Td(id='player1-average')
+                            ]),
+                        ])),
                         dbc.Button("Go to Steam Profile", id='player1-steam')
                     ])
                 ], id='card-player1', color="dark", inverse=True),
@@ -129,11 +135,17 @@ app.layout = html.Div([
                     dbc.CardImg(id='player2-img'),
                     dbc.CardBody([
                         html.H4(id='player2-name'),
-                        dbc.Table(html.Tbody([html.Tr([
-                            html.Td(html.Img(id='player2-level',
+                        dbc.Table(html.Tbody([
+                            html.Tr([
+                                html.Td(html.Img(id='player2-level',
                                     style={'width': '50px', 'height': '50px'})),
-                            html.Td(id='player2-elo')
-                        ])])),
+                                html.Td(id='player2-elo')
+                            ]),
+                            html.Tr([
+                                html.Td(id='player2-label'),
+                                html.Td(id='player2-average')
+                            ]),
+                        ])),
                         dbc.Button("Go to Steam Profile", id='player2-steam')
                     ])
                 ], id='card-player2', color="dark", inverse=True)
@@ -196,20 +208,39 @@ def callbackAddPlayer(n_clicks, input):
     Output('player1-steam', 'href'),
     Output('player1-elo', 'children'),
     Output('player1-level', 'src'),
+    Output('player1-label', 'children'),
+    Output('player1-average', 'children'),
     Input('player1', 'value'),
+    Input('yaxis', 'value')
 )
-def callbackUpdatePlayer1Card(input):
-    if input:
+def callbackUpdatePlayer1Card(player1, value):
+    if player1 and value:
+        query = '''
+            from(bucket: "{}")
+                |> range(start: -30d)\
+                |> filter(fn: (r) => r["_measurement"] == "stats")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["host"] == "{}")
+                |> yield(name: "mean")
+                |> mean()
+        '''.format(bucket, value, player1)
+
+        average = round(influx.query(query)[1].records[0].get_value(), 2)
+
         player = db.select('players', "name = '{}'".format(
-            input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
+            player1), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
+
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
+
         encoded_img = base64.b64encode(open(img_filename, 'rb').read())
+
         return player[0]['name'], player[0]['avatar'], \
             "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), \
             player[0]['faceitElo'], 'data:image/png;base64,{}'.format(
-            encoded_img.decode())
+            encoded_img.decode()), \
+            "Average {}".format(value), average
     else:
-        return '', '', '', '', ''
+        return '', '', '', '', '', '', ''
 
 
 @app.callback(
@@ -218,20 +249,36 @@ def callbackUpdatePlayer1Card(input):
     Output('player2-steam', 'href'),
     Output('player2-elo', 'children'),
     Output('player2-level', 'src'),
+    Output('player2-label', 'children'),
+    Output('player2-average', 'children'),
     Input('player2', 'value'),
+    Input('yaxis', 'value')
 )
-def callbackUpdatePlayer2Card(input):
-    if input:
+def callbackUpdatePlayer2Card(player2, value):
+    if player2 and value:
+        query = '''
+            from(bucket: "{}")
+                |> range(start: -30d)\
+                |> filter(fn: (r) => r["_measurement"] == "stats")
+                |> filter(fn: (r) => r["_field"] == "{}")
+                |> filter(fn: (r) => r["host"] == "{}")
+                |> yield(name: "mean")
+                |> mean()
+        '''.format(bucket, value, player2)
+
+        average = round(influx.query(query)[1].records[0].get_value(), 2)
+
         player = db.select('players', "name = '{}'".format(
-            input), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
+            player2), 'name', 'avatar', 'steamProfile', 'faceitElo', 'skillLevel')
         img_filename = "data/level_" + player[0]['skillLevel'] + ".png"
         encoded_img = base64.b64encode(open(img_filename, 'rb').read())
         return player[0]['name'], player[0]['avatar'], \
             "https://steamcommunity.com/profiles/{}".format(player[0]['steamProfile']), \
             player[0]['faceitElo'], 'data:image/png;base64,{}'.format(
-            encoded_img.decode())
+            encoded_img.decode()), \
+            "Average {}".format(value), average
     else:
-        return '', '', '', '', ''
+        return '', '', '', '', '', '', ''
 
 
 @app.callback(
@@ -241,13 +288,14 @@ def callbackUpdatePlayer2Card(input):
     Output('card-column', 'width'),
     Input('player1', 'value'),
     Input('player2', 'value'),
+    Input('yaxis', 'value')
 )
-def showHidePlayerCard(player1, player2):
-    if player1 and not player2:
+def showHidePlayerCard(player1, player2, value):
+    if player1 and not player2 and value:
         return {'display': 'inline'}, {'display': 'none'}, {'display': 'none'}, {"size": 2, "offset": 3}
-    if not player1 and player2:
+    if not player1 and player2 and value:
         return {'display': 'none'}, {'display': 'none'}, {'display': 'inline'}, {"size": 2, "offset": 7}
-    if player1 and player2:
+    if player1 and player2 and value:
         return {'display': 'inline'}, {'display': 'inline'}, {'display': 'inline'}, {"size": 6, "offset": 3}
     else:
         return {'display': 'none'}, {'display': 'none'}, {'display': 'none'}, {"size": 6, "offset": 3}

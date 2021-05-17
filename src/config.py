@@ -1,5 +1,5 @@
 # standard image if player has no avatar
-avatarPng = "https://lh3.googleusercontent.com/proxy/Qsc4M49-5CW6e3YOUovsxeSA18RcHjd7pzZbO5xVsFZ9ZO_gP9cmXc2C11KPVparzrBR5JfemZsiJGBlzbm1VR--Gd8ZHFcnre_TVtID2f3fC2fJTF0w4Mc"
+avatarPng = "https://img.favpng.com/8/24/4/avatar-royalty-free-png-favpng-6920SU0BFdaEZTMCMSsrTTPws.jpg"
 
 # header to connect to faceit API
 headers = {
