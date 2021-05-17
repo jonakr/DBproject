@@ -24,16 +24,14 @@ class Mysql:
 
     Methods
     -------
-    open()
-        open connection to database
-    close()
-        close connection to database
+    __open()
+        __open connection to database
+    __close()
+        __close connection to database
     insert(table, *args, **kwargs)
         insert data into table
     select(table, where=None, *args)
         select data from table
-    execute(sql)
-        execute sql string
     addTable(template)
         add table to database
     checkIfTableExists(table)
@@ -69,7 +67,7 @@ class Mysql:
         self.__password = password
         self.__database = database
 
-    def open(self):
+    def __open(self):
         """
         Opens a connection to MySQL database and creates cursor
 
@@ -92,7 +90,7 @@ class Mysql:
         except mysql.connector.Error as err:
             print("Something went wrong: {}".format(err))
 
-    def close(self):
+    def __close(self):
         """
         Closes the connection to cursor and database
         """
@@ -125,10 +123,10 @@ class Mysql:
             values = args
             query += " VALUES(" + ",".join(["%s"]*len(values)) + ")"
 
-        self.open()
+        self.__open()
         self.__cursor.execute(query, values)
         self.__connection.commit()
-        self.close()
+        self.__close()
         return self.__cursor.lastrowid
 
     def select(self, table, where=None, *args):
@@ -157,26 +155,10 @@ class Mysql:
         if where:
             query += " WHERE %s" % where
 
-        self.open()
+        self.__open()
         self.__cursor.execute(query)
         result = self.__cursor.fetchall()
-        self.close()
-        return result
-
-    def execute(self, sql):
-        """
-        Execute a SQL statement that isn't implemented as function.
-
-        Parameters
-        ----------
-        sql : str
-            the sql statement to execute
-        """
-
-        self.open()
-        self.__cursor.execute(sql)
-        result = self.__cursor.fetchall()
-        self.close()
+        self.__close()
         return result
 
     def addTable(self, template):
@@ -189,9 +171,9 @@ class Mysql:
             the template that contains all configurations for the table
         """
 
-        self.open()
+        self.__open()
         self.__cursor.execute(template)
-        self.close()
+        self.__close()
 
     def checkIfTableExists(self, table):
         """
@@ -203,12 +185,15 @@ class Mysql:
             the table that is searched
         """
 
-        self.open()
+        self.__open()
         query = "SHOW TABLES LIKE '{}'".format(table)
         self.__cursor.execute(query)
         result = self.__cursor.fetchall()
-        self.close()
-        return result
+        self.__close()
+        if result:
+            return True
+        else:
+            return False     
 
     def dropTable(self, table):
         """
@@ -220,7 +205,7 @@ class Mysql:
             the table that is dropped
         """
 
-        self.open()
+        self.__open()
         query = "DROP TABLE {}".format(table)
         self.__cursor.execute(query)
-        self.close()
+        self.__close()

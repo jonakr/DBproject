@@ -1,6 +1,7 @@
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
+import urllib3
 
 class Influx:
     """
@@ -24,9 +25,9 @@ class Influx:
 
     Methods
     -------
-    open()
+    __open()
         opens the connection to the database
-    close
+    __close
         closes the connection to the database
     write(data)
         receives data to write to the database
@@ -60,16 +61,24 @@ class Influx:
         self.__bucket = bucket
         self.__url = url
 
-    def open(self):
+    def __open(self):
         """
         opens connection to database and sets __client attribute
+
+        Raises
+        ------
+        urllib3.exceptions.NewConnectionError
+            throws error if connection fails
         """
 
-        # TODO: Try Except
-        client = InfluxDBClient(url=self.__url, token=self.__token)
-        self.__client = client
+        try:
+            client = InfluxDBClient(url=self.__url, token=self.__token)
+            self.__client = client
+        
+        except urllib3.exceptions.NewConnectionError as err:
+            print("Something went wrong: {}".format(err))
 
-    def close(self):
+    def __close(self):
         """
         closes the connection to the database
         """
@@ -87,10 +96,10 @@ class Influx:
             "bucket,host=host1 data1=,data2=,... timestamp"
         """
 
-        self.open()
+        self.__open()
         write_api = self.__client.write_api(write_options=SYNCHRONOUS)
         write_api.write(self.__bucket, self.__org, data, write_precision='s')
-        self.close()
+        self.__close()
 
     def query(self, query, df=False):
         """
@@ -104,10 +113,10 @@ class Influx:
             can be set to true to return the query as data frame
         """
 
-        self.open()
+        self.__open()
         if df:
             result = self.__client.query_api().query_data_frame(query, org=self.__org)
         else:
             result = self.__client.query_api().query(query, self.__org)
-        self.close()
+        self.__close()
         return result
