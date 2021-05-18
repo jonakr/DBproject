@@ -2,14 +2,10 @@ import pandas as pd
 
 import plotly.express as px
 
-from dbCredentials import token, org, bucket, url
-
-from influx import Influx
-
 from collections import Counter
 
 
-def createPieChart(player):
+def createPieChart(influx, player):
     """
     Querys all maps played from the influx database for a specific player,
     creates and returns a plotly express pie chart figure.
@@ -25,17 +21,15 @@ def createPieChart(player):
         the created plotly express pie chart figure
     """
 
-    influx = Influx(token=token, org=org, bucket=bucket, url=url)
-
     # query all maps played by the given player
     query = '''
-            from(bucket: "{}")
+            from(bucket: "matches")
                 |> range(start: -30d)\
                 |> filter(fn: (r) => r["_measurement"] == "stats")
                 |> filter(fn: (r) => r["_field"] == "map")
                 |> filter(fn: (r) => r["host"] == "{}")
                 |> yield(name: "mean")
-        '''.format(bucket, player)
+        '''.format(player)
 
     result = influx.query(query)
 

@@ -1,8 +1,8 @@
 import json
 import requests
 
-from config import headers, avatarPng
-from addMatches import addMatches
+from src.config import headers, avatarPng
+from src.addMatches import addMatches
 
 
 def addPlayer(db, name):

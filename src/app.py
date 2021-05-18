@@ -350,11 +350,11 @@ def update_graph(player1, player2, yaxis):
 def update_piechart(player1, player2):
 
     if player1 and not player2:
-        return createPieChart(player1), {'display': 'inline'}, px.pie(), {'display': 'none'}
+        return createPieChart(influx, player1), {'display': 'inline'}, px.pie(), {'display': 'none'}
     if player2 and not player1:
-        return px.pie(), {'display': 'none'}, createPieChart(player2), {'display': 'inline'}
+        return px.pie(), {'display': 'none'}, createPieChart(influx, player2), {'display': 'inline'}
     if player1 and player2:
-        return createPieChart(player1), {'display': 'inline'}, createPieChart(player2), {'display': 'inline'}
+        return createPieChart(influx, player1), {'display': 'inline'}, createPieChart(influx, player2), {'display': 'inline'}
     else:
         return px.pie(), {'display': 'none'}, px.pie(), {'display': 'none'}
 

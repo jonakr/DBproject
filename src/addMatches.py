@@ -1,10 +1,10 @@
 import json
 import requests
 
-from influx import Influx
+from src.influx import Influx
 
-from config import headers
-from dbCredentials import token, org, bucket, url
+from src.config import headers
+from src.dbCredentials import token, org, bucket, url
 
 
 def addMatches(name, id):
