@@ -8,7 +8,7 @@ Add faceit players to a [MySQL](https://www.mysql.com/de/) database and track th
 
 1. First you need a running MySQL Server!
     * Create a database called `faceit`.
-    * Add [this]() to your created database with the MySQL CLI.
+    * Add [this](https://github.com/jonakrumrein/DBproject/blob/main/setup/players.sql) to your created database with the MySQL CLI.
         * `mysql -u username -p faceit < players.sql` 
     * Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your MySQL Credentials.
     * (Optional) Create a `testing` databases to be able to execute test files later.
