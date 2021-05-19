@@ -13,7 +13,7 @@ Add faceit players to a [MySQL](https://www.mysql.com/de/) database and track th
     * Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your MySQL Credentials.
     * (Optional) Create a `testing` databases to be able to execute test files later.
 2. Install the required dependencies!
-    * `requriments.txt` contains all required dependencies.
+    * `requirments.txt` contains all required dependencies.
     * Execute `pip install -r requirements.txt`.
 3. Start the localhost webapp!
     * Navigate to the `src`-folder.
