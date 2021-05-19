@@ -15,6 +15,11 @@ def addMatches(influx, name, id):
         the id of the player
     name : str
         the name of the player
+
+    Returns
+    -------
+    boolean
+        true if matches were added, false otherwise
     """
 
     # pull the last 20 matches of a player via the API
