@@ -1,8 +1,8 @@
 import pytest
 import json
 
-from src.createPieChart import createPieChart
-from src.influx import Influx
+from createPieChart import createPieChart
+from influx import Influx
 
 @pytest.fixture
 def test_database():

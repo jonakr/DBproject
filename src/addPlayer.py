@@ -1,8 +1,7 @@
 import json
 import requests
 
-from src.config import headers, avatarPng
-from src.addMatches import addMatches
+from config import headers, avatarPng
 
 
 def addPlayer(db, name):
@@ -42,8 +41,6 @@ def addPlayer(db, name):
             db.insert('players', player['player_id'], player['nickname'], avatar, player['country'], player['games']
                       ['csgo']['skill_level'], player['games']['csgo']['faceit_elo'], player['steam_id_64'])
 
-        # call the addMatches function to add the last 20 played matches
-        addMatches(name, player['player_id'])
         return True
 
     else:

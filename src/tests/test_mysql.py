@@ -1,5 +1,5 @@
 import pytest
-from src.mysqldb import Mysql
+from mysqldb import Mysql
 
 @pytest.fixture
 def test_database():

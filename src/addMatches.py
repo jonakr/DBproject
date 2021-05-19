@@ -1,13 +1,10 @@
 import json
 import requests
 
-from src.influx import Influx
-
-from src.config import headers
-from src.dbCredentials import token, org, bucket, url
+from config import headers
 
 
-def addMatches(name, id):
+def addMatches(influx, name, id):
     """
     Pulls all matches the given player has played from the API
     and writes it to the InfluxDB.
@@ -20,23 +17,26 @@ def addMatches(name, id):
         the name of the player
     """
 
-    # initialize INfluxDB connection
-    influx = Influx(token=token, org=org, bucket=bucket, url=url)
-
     # pull the last 20 matches of a player via the API
     matches = json.loads(requests.get('https://open.faceit.com/data/v4/players/' +
                          id + '/history?game=csgo&offset=0&limit=20', headers=headers).content)
 
+    if not matches['items']:
+        return False
+
     # iterate over every match and pull specific data for each match from the API
     for match in matches['items']:
+
         matchStats = json.loads(requests.get(
             'https://open.faceit.com/data/v4/matches/' + match['match_id'] + '/stats', headers=headers).content)
-
+        
         # set the timestamp
         timestamp = match['started_at']
 
         # check if match has stats
-        if 'rounds' in matchStats:
+        if not 'rounds' in matchStats:
+            return False
+        else:
             map = matchStats['rounds'][0]['round_stats']['Map']
 
             # get the team the player has played in and get all his stats
@@ -58,3 +58,5 @@ def addMatches(name, id):
             data = 'stats,host={} map="{}",win={},kills={},deaths={},assists={},headshots={},triples={},quads={},pentas={},kpr={},kpd={} {}'.format(
                 name, map, win, kills, deaths, assists, headshots, triples, quads, pentas, kpr, kpd, timestamp)
             influx.write(data)
+
+    return True

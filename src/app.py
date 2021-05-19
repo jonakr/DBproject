@@ -11,6 +11,7 @@ import base64
 from mysqldb import Mysql
 from influx import Influx
 from addPlayer import addPlayer
+from addMatches import addMatches
 from createPieChart import createPieChart
 from config import dbPlayersLayout
 from dbCredentials import token, org, url, bucket, host, user, password, database
@@ -187,18 +188,18 @@ app.layout = html.Div([
     State('input', 'value'),
 )
 def callbackAddPlayer(n_clicks, input):
+    players = [{"label": i['name'], "value": i['name']}
+                       for i in db.select('players', None, 'name')]
     if input:
         if addPlayer(db, input):
+            playerId = db.select('players', "name = '{}'".format(input), 'playerId')[0]['playerId']
+            addMatches(influx, input, playerId)
             players = [{"label": i['name'], "value": i['name']}
                        for i in db.select('players', None, 'name')]
             return players, players, False, ''
         else:
-            players = [{"label": i['name'], "value": i['name']}
-                       for i in db.select('players', None, 'name')]
             return players, players, True, ''
     else:
-        players = [{"label": i['name'], "value": i['name']}
-                   for i in db.select('players', None, 'name')]
         return players, players, False, ''
 
 

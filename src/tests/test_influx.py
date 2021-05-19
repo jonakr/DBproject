@@ -1,6 +1,6 @@
 import pytest
 import urllib3
-from src.influx import Influx
+from influx import Influx
 
 @pytest.fixture
 def test_database():
