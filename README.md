@@ -34,7 +34,7 @@ Front- and Backend: [Dash](https://dash.plotly.com/)
     * Ctrl + Click on the URL shown in the console.
 3. Now you are ready to go!
 
-## Optional: Create own InfluxDB
+## Optional: Create own MySQL DB
 
 1. First you need a running MySQL Server!
 2. Create a database called `faceit`.
