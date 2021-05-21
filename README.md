@@ -1,9 +1,6 @@
 # Project of the databases lecture 2021
 
 Matrikelnummer: 8366074
-
-Visit the project here:
-
 ## Overview
 
 Faceit Stats - Analyze your Faceit CS:GO Statistics and compare it with others!
@@ -28,24 +25,25 @@ Front- and Backend: [Dash](https://dash.plotly.com/)
         * Contains all tests for the included py-files
 ## Getting Started
 
-1. First you need a running MySQL Server!
-    * Create a database called `faceit`.
-    * Add [this](https://github.com/jonakrumrein/DBproject/blob/main/setup/players.sql) to your created database with the MySQL CLI.
-        * `mysql -u username -p faceit < players.sql` 
-    * Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your MySQL Credentials.
-    * (Optional) Create a `testing` databases to be able to execute test files later.
-2. Install the required dependencies!
+1. Install the required dependencies!
     * `requirments.txt` contains all required dependencies.
     * Execute `pip install -r requirements.txt`.
-3. Start the localhost webapp!
+2. Start the localhost webapp!
     * Navigate to the `src`-folder.
     * Run `python app.py`.
     * Ctrl + Click on the URL shown in the console.
-4. Now you are ready to go!
+3. Now you are ready to go!
 
 ## Optional: Create own InfluxDB
 
-1. Drop your current MySQl `player` table.
+1. First you need a running MySQL Server!
+2. Create a database called `faceit`.
+3. Add [this](https://github.com/jonakrumrein/DBproject/blob/main/setup/players.sql) to your created database with the MySQL CLI.
+    * `mysql -u username -p faceit < players.sql` 
+4. Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your MySQL Credentials.
+## Optional: Create own InfluxDB
+
+1. Drop your current MySQl `player` table (if created locally).
 2. Setup a InfluxDB bucket called `matches`.
 3. Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your InfluxDB Credentials.
 

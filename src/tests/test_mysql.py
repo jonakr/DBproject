@@ -1,10 +1,11 @@
 import pytest
 from mysqldb import Mysql
+from dbCredentials import host, user, password, database
 
 @pytest.fixture
 def test_database():
     ''' Returns a MySql DB object '''
-    return Mysql(host="localhost", user="root", password="root", database="testing")
+    return Mysql(host=host, user=user, password=password, database=database)
 
 @pytest.fixture
 def test_error_database():

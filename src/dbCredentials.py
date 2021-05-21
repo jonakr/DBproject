@@ -7,7 +7,7 @@ bucket = "matches"
 url = "https://eu-central-1-1.aws.cloud2.influxdata.com"
 
 # MySQL connection data
-host="localhost"
-user="root"
-password="root"
-database="faceit"
+host="remotemysql.com"
+user="KyVstWPluB"
+password="Ep4f0F8Vs3"
+database="KyVstWPluB"
