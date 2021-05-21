@@ -30,12 +30,12 @@ Front- and Backend: [Dash](https://dash.plotly.com/)
 
 1. First you need a running MySQL Server!
     * Create a database called `faceit`.
-    * Add [this]() to your created database with the MySQL CLI.
+    * Add [this](https://github.com/jonakrumrein/DBproject/blob/main/setup/players.sql) to your created database with the MySQL CLI.
         * `mysql -u username -p faceit < players.sql` 
     * Update the [dbCredentials.py](https://github.com/jonakrumrein/DBproject/blob/main/src/dbCredentials.py) with your MySQL Credentials.
     * (Optional) Create a `testing` databases to be able to execute test files later.
 2. Install the required dependencies!
-    * `requriments.txt` contains all required dependencies.
+    * `requirments.txt` contains all required dependencies.
     * Execute `pip install -r requirements.txt`.
 3. Start the localhost webapp!
     * Navigate to the `src`-folder.
