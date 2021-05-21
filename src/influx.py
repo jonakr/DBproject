@@ -1,8 +1,6 @@
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-import urllib3
-
 class Influx:
     """
     A class used to connect to a InfluxDB Cloud 2.0
@@ -67,7 +65,7 @@ class Influx:
 
         Raises
         ------
-        urllib3.exceptions.NewConnectionError
+        Exception
             throws error if connection fails
         """
 
@@ -75,7 +73,7 @@ class Influx:
             client = InfluxDBClient(url=self.__url, token=self.__token)
             self.__client = client
         
-        except urllib3.exceptions.NewConnectionError as err:
+        except Exception as err:
             print("Something went wrong: {}".format(err))
 
     def __close(self):

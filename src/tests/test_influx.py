@@ -37,7 +37,7 @@ def test_write_and_query(test_database):
     assert test_database.query(query)[0].records[0].get_value() == 23.43234543
 
 def test_faulty_db(test_faulty_database):
-    with pytest.raises(urllib3.exceptions.NewConnectionError):
+    with pytest.raises(Exception):
         data = "mem,host=host1 used_percent=23.43234543"
         test_faulty_database.write(data)
 

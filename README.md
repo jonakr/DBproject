@@ -1,9 +1,31 @@
 # Project of the databases lecture 2021
 
+Matrikelnummer: 8366074
+
+Visit the project here:
+
+## Overview
+
 Faceit Stats - Analyze your Faceit CS:GO Statistics and compare it with others!
 
 Add faceit players to a [MySQL](https://www.mysql.com/de/) database and track their stats with [InfluxDB](https://www.influxdata.com/)!
 
+Front- and Backend: [Dash](https://dash.plotly.com/)
+
+## Functions
+
+* add a player and his matches
+* select a player to show his stats as line and pie chart
+* compare stats of two players
+## Structure
+
+* [src](https://github.com/jonakrumrein/DBproject/tree/main/src)
+    * [assets](https://github.com/jonakrumrein/DBproject/tree/main/src/assets)
+        * Contains css and js that is execute add app launch.
+    * [data](https://github.com/jonakrumrein/DBproject/tree/main/src/data)
+        * Contains faceit level pictures.
+    * [tests](https://github.com/jonakrumrein/DBproject/tree/main/src/tests)
+        * Contains all tests for the included py-files
 ## Getting Started
 
 1. First you need a running MySQL Server!
@@ -34,12 +56,4 @@ Add faceit players to a [MySQL](https://www.mysql.com/de/) database and track th
 3. The console shows passed tests and the coverage.
 ![Last Coverage (19.05.2021)](https://github.com/jonakrumrein/DBproject/blob/main/src/tests/coverage.png)
 
-## Structure
-
-* [src](https://github.com/jonakrumrein/DBproject/tree/main/src)
-    * [assets](https://github.com/jonakrumrein/DBproject/tree/main/src/assets)
-        * Contains css and js that is execute add app launch.
-    * [data](https://github.com/jonakrumrein/DBproject/tree/main/src/data)
-        * Contains faceit level pictures.
-    * [tests](https://github.com/jonakrumrein/DBproject/tree/main/src/tests)
-        * Contains all tests for the included py-files
+The `app.py` isn't tested because its only used as UI.
